@@ -1,0 +1,77 @@
+<template>
+  <div class="pb-8">
+    <!-- Hero Carousel -->
+    <RieltorCarousel />
+
+    <!-- Stats -->
+    <div class="grid grid-cols-2 gap-2 mx-3 mt-3">
+      <div class="card text-center py-3">
+        <div class="w-8 h-8 bg-brand-50 dark:bg-brand-900/30 rounded-full flex items-center justify-center mx-auto mb-2">
+          <svg class="w-4 h-4 text-brand-600 dark:text-brand-400" fill="none" viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM3 17c0-3.314 3.134-6 7-6s7 2.686 7 6" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <p class="font-bold text-xl text-gray-900 dark:text-white tabular-nums">{{ activeCount }}</p>
+        <p class="text-xs text-gray-400">{{ t('rieltor.active') }}</p>
+      </div>
+      <div class="card text-center py-3">
+        <div class="w-8 h-8 bg-green-50 dark:bg-green-900/30 rounded-full flex items-center justify-center mx-auto mb-2">
+          <svg class="w-4 h-4 text-green-600 dark:text-green-400" fill="none" viewBox="0 0 20 20" aria-hidden="true">
+            <path d="M3 12L8 4l5 8H3z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <p class="font-bold text-xl text-gray-900 dark:text-white tabular-nums">87%</p>
+        <p class="text-xs text-gray-400">{{ t('rieltor.conversion') }}</p>
+      </div>
+    </div>
+
+    <!-- Tip -->
+    <div class="px-3 mt-3">
+      <UiInfoCard
+        icon="tip"
+        :title="t('rieltor.tipTitle')"
+        :desc="t('rieltor.tipDesc')"
+      />
+    </div>
+
+    <!-- Applications list -->
+    <section class="px-3 mt-4">
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-sm font-bold text-gray-900 dark:text-white">{{ t('rieltor.newApps') }}</h2>
+        <span
+          class="bg-brand-600 text-white text-xs font-bold px-2 py-0.5 rounded-full tabular-nums"
+          :aria-label="t('rieltor.countAria', { n: activeCount })"
+        >
+          {{ activeCount }}
+        </span>
+      </div>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mb-3">
+        {{ t('rieltor.newAppsSub') }}
+      </p>
+
+      <TransitionGroup name="list" tag="div" class="space-y-3">
+        <RieltorApplicationCard
+          v-for="app in applications"
+          :key="app.id"
+          :application="app"
+        />
+      </TransitionGroup>
+
+      <div v-if="applications.length === 0" class="text-center py-12 text-gray-400 text-sm">
+        {{ t('rieltor.empty') }}
+      </div>
+    </section>
+  </div>
+</template>
+
+<script setup>
+const { applications, activeCount } = useApplications()
+const { t } = useI18n()
+</script>
+
+<style scoped>
+.list-enter-active { transition: all 0.3s ease; }
+.list-enter-from   { opacity: 0; transform: translateY(-8px); }
+.list-leave-active { transition: all 0.2s ease; }
+.list-leave-to     { opacity: 0; transform: translateX(20px); }
+</style>

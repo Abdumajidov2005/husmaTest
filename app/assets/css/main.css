@@ -1,0 +1,55 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    -webkit-tap-highlight-color: transparent;
+    /* Telegram WebApp safe area */
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  body {
+    @apply bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100;
+    /* Prevent horizontal scroll on very small screens */
+    overflow-x: hidden;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply w-full py-3 rounded-2xl bg-brand-600 text-white font-semibold text-sm
+           active:scale-95 transition-all duration-150
+           flex items-center justify-center gap-2
+           disabled:opacity-60 disabled:cursor-not-allowed disabled:active:scale-100;
+  }
+  .card {
+    @apply bg-white dark:bg-gray-900 rounded-2xl
+           border border-gray-100 dark:border-gray-800 p-3;
+  }
+  .input-field {
+    @apply w-full bg-gray-100 dark:bg-gray-800
+           border border-transparent focus:border-brand-500 dark:focus:border-brand-500
+           rounded-xl px-3 py-2.5 text-sm outline-none transition-all
+           placeholder-gray-400 dark:placeholder-gray-500
+           text-gray-900 dark:text-gray-100;
+  }
+}
+
+/* Kichik ekranlar uchun (320px iPhone SE) */
+@media (max-width: 360px) {
+  .card { @apply p-2.5; }
+  .input-field { @apply px-2.5 py-2; }
+  .btn-primary { @apply py-2.5 text-xs; }
+}
+
+
+/* Tugmalar standart holda to'liq kenglikda (submit / CTA uchun).
+   @layer base ichida — shu sababli w-5, w-auto, w-8 kabi utility klasslar
+   uni bemalol qayta yoza oladi (ikona/nuqta/tab tugmalari to'g'ri o'lchamda). */
+@layer base {
+  button {
+    width: 100%;
+  }
+}
