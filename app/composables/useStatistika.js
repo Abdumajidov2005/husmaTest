@@ -1,7 +1,6 @@
 
 const homeStats    = ref(null)
 const rieltorStats = ref(null)
-
 const homeLoaded    = ref(false)
 const rieltorLoaded = ref(false)
 
@@ -16,7 +15,7 @@ export function useStatistika() {
         homeStats.value = data
         homeLoaded.value = true
       }
-    } catch { /* server xatosi — fallback qiymatlari ishlatiladi */ }
+    } catch {}
     return homeStats.value
   }
 
@@ -27,7 +26,7 @@ export function useStatistika() {
         rieltorStats.value = data
         rieltorLoaded.value = true
       }
-    } catch { /* server xatosi — 0 qiymatlari ishlatiladi */ }
+    } catch {}
     return rieltorStats.value
   }
 

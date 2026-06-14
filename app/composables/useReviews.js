@@ -35,7 +35,7 @@ export function useReviews() {
     try {
       const { ok, status, data } = await apiFetch('/api/reviews/', { method: 'POST', body: payload })
       if (ok) return { ok: true, data }
-      if (status === 400) return { ok: false, errorKey: 'reviews.errValidation', detail: data }
+      if (status === 400) return { ok: false, errorKey: 'reviews.errValidation' }
       return { ok: false, errorKey: 'reviews.errServer' }
     } catch { return { ok: false, errorKey: 'auth.networkError' } }
   }

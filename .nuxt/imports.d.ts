@@ -45,3 +45,4 @@ export { useSlider } from '../app/composables/useSlider';
 export { useStatistika } from '../app/composables/useStatistika';
 export { useTelegram } from '../app/composables/useTelegram';
 export { COLORS, SIZES, VARIANTS, useTheme } from '../app/composables/useTheme';
+export { useNuxtDevTools } from '../node_modules/@nuxt/devtools/dist/runtime/use-nuxt-devtools';

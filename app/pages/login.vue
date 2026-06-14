@@ -63,6 +63,17 @@
           <span class="text-xs text-green-700 dark:text-green-400">{{ t('login.freeTrial') }}</span>
         </div>
 
+        <!-- Demo OTP ko'rsatkichi -->
+        <div v-if="demoOtp" class="mb-4 flex items-center gap-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl px-3 py-2.5">
+          <svg class="w-4 h-4 text-blue-500 flex-shrink-0" fill="none" viewBox="0 0 16 16">
+            <circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.3"/>
+            <path d="M8 5v3.5M8 10.5v.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          <span class="text-xs text-blue-700 dark:text-blue-300">
+            Kod (demo): <strong class="font-mono tracking-widest">{{ demoOtp }}</strong>
+          </span>
+        </div>
+
         <form novalidate class="space-y-3" @submit.prevent="handleOtpSubmit">
           <UiFormField :label="t('login.otpLabel')" icon="lock" :error="errors.otp">
             <input
@@ -295,6 +306,7 @@ const form         = reactive({ name: '', phone: '', login: '', password: '', ci
 const errors       = reactive({})
 const isLoading    = ref(false)
 const showPassword = ref(false)
+const demoOtp = ref('')
 
 const cities = computed(() => viloyatlar.value.map((v) => v.nomi))
 
@@ -381,6 +393,7 @@ async function handleSubmit() {
         mulk_turlari: [1],
       })
       if (result.ok) {
+        if (result.demoOtp) demoOtp.value = result.demoOtp
         notificationHaptic('success')
         step.value = 'otp'
         otpCode.value = ''
