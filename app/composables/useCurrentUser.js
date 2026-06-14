@@ -1,13 +1,4 @@
-/**
- * useCurrentUser — Joriy foydalanuvchining barqaror identifikatsiyasi.
- *
- * Telegram ichida ochilsa  → Telegram user (id, ism, username, foto).
- * Oddiy brauzerda ochilsa  → localStorage da saqlangan barqaror "device" id.
- *
- * Bu identifikator anketalar egasini (ownerId) belgilash uchun ishlatiladi —
- * shu orqali "User bergan anketalar" sahifasi faqat o'sha foydalanuvchining
- * arizalarini ko'rsatadi.
- */
+
 
 const DEVICE_KEY = 'husma_device_id'
 

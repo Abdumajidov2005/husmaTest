@@ -1,13 +1,12 @@
-/**
- * Telegram WebApp composable.
- * SSR-safe: window ga faqat client-side da murojaat qilinadi.
- */
+
 export function useTelegram() {
   const tg = computed(() =>
     import.meta.client ? window.Telegram?.WebApp ?? null : null
   )
 
   const user = computed(() => tg.value?.initDataUnsafe?.user ?? null)
+  // Backendga yuborish uchun xom (raw) initData satri
+  const initData = computed(() => tg.value?.initData ?? '')
   const colorScheme = computed(() => tg.value?.colorScheme ?? 'light')
   const isReady = computed(() => !!tg.value)
 
@@ -30,7 +29,6 @@ export function useTelegram() {
     tg.value?.HapticFeedback?.impactOccurred(style)
   }
 
-  // haptic — alias (orqaga mos)
   const haptic = hapticImpact
 
   /**
@@ -76,6 +74,7 @@ export function useTelegram() {
   return {
     tg,
     user,
+    initData,
     colorScheme,
     isReady,
     supportsHaptic,

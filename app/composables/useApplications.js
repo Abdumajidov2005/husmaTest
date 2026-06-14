@@ -1,151 +1,266 @@
-/**
- * Module-level state — singleton pattern.
- * ref() tashqarida bo'lgani uchun barcha komponentlar
- * bir xil reaktiv state ni ulashadi.
- *
- * Yangilik:
- *  - localStorage da saqlanadi (sahifa yangilansa ham anketalar yo'qolmaydi)
- *  - har bir anketa `ownerId` ga ega → "User bergan anketalar" sahifasi
- *    faqat shu foydalanuvchining arizalarini ko'rsatadi
- */
 
-const STORAGE_KEY = 'husma_applications'
+const myApplications      = ref([])
+const rieltorApplications = ref([])
+const myLoaded            = ref(false)
+const rieltorLoaded       = ref(false)
 
-const SEED = [
+const HOLAT_TO_STATUS  = { yangi: 'new', korilmoqda: 'in_progress', yopilgan: 'done' }
+const TURI_TO_DEAL     = { ijara: 'arenda', sotib_olish: 'sotib' }
+const DEAL_TO_TURI     = { arenda: 'ijara', sotib: 'sotib_olish' }
+const MULK_TO_PROPERTY = { uy: 'uy', kvartira: 'kvartira' }
+const PROPERTY_TO_MULK = { uy: 'uy', kvartira: 'kvartira' }
+
+// Demo arizalar — server javob bermasa ko'rsatiladi
+const DEMO_MY_APPLICATIONS = [
   {
-    id: 1,
-    name: 'Alisher',
-    phone: '+998 90 123-45-67',
+    id: 1001,
+    name: 'Jasur Toshmatov',
+    phone: '+998901234567',
+    dealType: 'arenda',
+    propertyType: 'kvartira',
     rooms: 2,
-    district: 'Yunusobod',
-    budgetMin: 300_000_000,
-    budgetMax: 450_000_000,
-    notes: "Ta'mirlangan, yangi bino kerak",
-    createdAt: new Date(Date.now() - 2_000),
+    district: 'Yunusobod tumani',
+    budgetMin: 3000000,
+    budgetMax: 5000000,
+    notes: "Ta'mirlangan, lift bo'lsin",
+    createdAt: new Date(Date.now() - 3600000),
     status: 'new',
-    ownerId: null, // demo — boshqa mijozning arizasi
+    vaqtOldin: '1s oldin',
   },
   {
-    id: 2,
-    name: 'Madina',
-    phone: '+998 91 234-56-78',
-    rooms: 1,
-    district: 'Chilonzor',
-    budgetMin: 200_000_000,
-    budgetMax: 280_000_000,
-    notes: 'Metro yaqinida, yuqori qavat',
-    createdAt: new Date(Date.now() - 5_000),
-    status: 'new',
-    ownerId: null,
+    id: 1002,
+    name: 'Malika Yusupova',
+    phone: '+998901234568',
+    dealType: 'sotib',
+    propertyType: 'kvartira',
+    rooms: 3,
+    district: 'Chilonzor tumani',
+    budgetMin: 80000000,
+    budgetMax: 120000000,
+    notes: 'Metro yaqinida',
+    createdAt: new Date(Date.now() - 86400000),
+    status: 'in_progress',
+    vaqtOldin: '1k oldin',
   },
 ]
 
-const applications = ref(SEED)
-
-// localStorage hydration — faqat client da, bir marta
-let loaded = false
-
-function reviveDates(list) {
-  return list.map((a) => ({
-    ownerId: null,
+const DEMO_RIELTOR_APPLICATIONS = [
+  {
+    id: 2001,
+    name: 'Bobur Rahimov',
+    phone: '+998901112233',
+    dealType: 'arenda',
+    propertyType: 'kvartira',
+    rooms: 1,
+    district: 'Mirzo Ulug\'bek tumani',
+    budgetMin: 2000000,
+    budgetMax: 3500000,
+    notes: '',
+    createdAt: new Date(Date.now() - 1800000),
     status: 'new',
-    ...a,
-    createdAt: a.createdAt ? new Date(a.createdAt) : new Date(),
-  }))
-}
+    vaqtOldin: '30m oldin',
+  },
+  {
+    id: 2002,
+    name: 'Nilufar Karimova',
+    phone: '+998909998877',
+    dealType: 'sotib',
+    propertyType: 'kvartira',
+    rooms: 2,
+    district: 'Yunusobod tumani',
+    budgetMin: 60000000,
+    budgetMax: 90000000,
+    notes: "Yangi bino bo'lsin",
+    createdAt: new Date(Date.now() - 7200000),
+    status: 'new',
+    vaqtOldin: '2s oldin',
+  },
+  {
+    id: 2003,
+    name: 'Sanjar Umarov',
+    phone: '+998901234500',
+    dealType: 'arenda',
+    propertyType: 'kvartira',
+    rooms: 3,
+    district: 'Shayxontohur tumani',
+    budgetMin: 5000000,
+    budgetMax: 8000000,
+    notes: 'Mebelli',
+    createdAt: new Date(Date.now() - 172800000),
+    status: 'in_progress',
+    vaqtOldin: '2k oldin',
+  },
+]
 
-function load() {
-  if (loaded || !import.meta.client) return
-  loaded = true
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY)
-    if (raw) {
-      const parsed = JSON.parse(raw)
-      if (Array.isArray(parsed) && parsed.length) {
-        applications.value = reviveDates(parsed)
-        return
-      }
-    }
-    // Birinchi ishga tushirish — seed ni saqlab qo'yamiz
-    save()
-  } catch {
-    /* buzilgan ma'lumot — seed bilan davom etamiz */
+function mapAriza(a) {
+  return {
+    id: a.id,
+    name: a.user_full_name || a.ism || '',
+    phone: a.telefon || '',
+    dealType: TURI_TO_DEAL[a.ariza_turi] || null,
+    propertyType: MULK_TO_PROPERTY[a.mulk_turi?.kod || a.mulk_turi] || null,
+    rooms: /^\d+$/.test(String(a.xonalar_soni)) ? Number(a.xonalar_soni) : a.xonalar_soni,
+    district: a.hudud?.nomi || '',
+    budgetMin: a.narx_min ?? 0,
+    budgetMax: a.narx_max ?? 0,
+    notes: a.qoshimcha_izoh || '',
+    createdAt: a.created_at ? new Date(a.created_at) : new Date(),
+    status: HOLAT_TO_STATUS[a.holat] || 'new',
+    vaqtOldin: a.vaqt_oldin || null,
   }
 }
 
-function save() {
-  if (!import.meta.client) return
-  try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(applications.value))
-  } catch {
-    /* kvota to'lgan bo'lishi mumkin — jim o'tkazib yuboramiz */
-  }
-}
-
-/**
- * @typedef {Object} Application
- * @property {number}  id
- * @property {string}  name
- * @property {string}  phone
- * @property {number|string} rooms
- * @property {string}  district
- * @property {number}  budgetMin
- * @property {number}  budgetMax
- * @property {string}  notes
- * @property {Date}    createdAt
- * @property {'new'|'in_progress'|'done'} status
- * @property {string|null} ownerId
- */
+let _demoIdCounter = 3000
 
 export function useApplications() {
-  load()
-
   const { t, intlLocale } = useI18n()
+  const { apiFetch } = useAuth()
 
   const activeCount = computed(
-    () => applications.value.filter((a) => a.status === 'new').length
+    () => rieltorApplications.value.filter((a) => a.status === 'new').length
   )
 
-  /**
-   * @param {Omit<Application, 'id'|'createdAt'|'status'|'ownerId'>} data
-   * @param {string|null} ownerId — anketani yuborgan foydalanuvchi
-   */
-  function addApplication(data, ownerId = null) {
-    applications.value.unshift({
-      id: Date.now(),
-      ...data,
+  async function fetchMyApplications(holat = null) {
+    try {
+      const qs = holat ? `?holat=${holat}&page_size=50` : '?page_size=50'
+      const { ok, data } = await apiFetch(`/api/arizalar/mening/${qs}`)
+      if (ok && Array.isArray(data?.results)) {
+        myApplications.value = data.results.map(mapAriza)
+        myLoaded.value = true
+        return myApplications.value
+      }
+    } catch {}
+    // Demo fallback
+    if (!myLoaded.value) {
+      myApplications.value = [...DEMO_MY_APPLICATIONS]
+      myLoaded.value = true
+    }
+    return myApplications.value
+  }
+
+  async function fetchRieltorApplications(holat = null) {
+    try {
+      const qs = holat ? `?holat=${holat}&page_size=50` : '?page_size=50'
+      const { ok, data } = await apiFetch(`/api/rieltor/arizalar/${qs}`)
+      if (ok && Array.isArray(data?.results)) {
+        rieltorApplications.value = data.results.map(mapAriza)
+        rieltorLoaded.value = true
+        return rieltorApplications.value
+      }
+    } catch {}
+    // Demo fallback
+    let list = [...DEMO_RIELTOR_APPLICATIONS]
+    if (holat === 'yangi')      list = list.filter((a) => a.status === 'new')
+    if (holat === 'korilmoqda') list = list.filter((a) => a.status === 'in_progress')
+    if (holat === 'yopilgan')   list = list.filter((a) => a.status === 'done')
+    rieltorApplications.value = list
+    rieltorLoaded.value = true
+    return rieltorApplications.value
+  }
+
+  async function addApplication(form) {
+    const body = {
+      hudud: form.district || null,
+      ariza_turi: DEAL_TO_TURI[form.dealType] || 'ijara',
+      mulk_turi: PROPERTY_TO_MULK[form.propertyType] || null,
+      xonalar_soni: String(form.rooms),
+      narx_min: form.budgetMin || 0,
+      narx_max: form.budgetMax || 0,
+      telefon: form.phone || null,
+      ism: form.name || null,
+      qoshimcha_izoh: form.notes || null,
+    }
+
+    try {
+      const { ok, status, data } = await apiFetch('/api/arizalar/', {
+        method: 'POST',
+        body,
+      })
+      if (ok && data) {
+        myApplications.value.unshift(mapAriza(data))
+        return { ok: true }
+      }
+      if (status === 400) return { ok: false, errorKey: 'form.errServer', detail: data }
+      if (status === 401) {
+        // 401 — demo rejimda saqlash
+      }
+    } catch {}
+
+    // Demo rejim — localda saqlaymiz
+    const demoAriza = {
+      id: ++_demoIdCounter,
+      name: form.name || '',
+      phone: form.phone || '',
+      dealType: form.dealType,
+      propertyType: form.propertyType,
+      rooms: form.rooms,
+      district: '',
+      budgetMin: form.budgetMin || 0,
+      budgetMax: form.budgetMax || 0,
+      notes: form.notes || '',
       createdAt: new Date(),
       status: 'new',
-      ownerId,
-    })
-    save()
-  }
-
-  /**
-   * Foydalanuvchi o'z anketasini o'chiradi.
-   * @param {number} id
-   */
-  function removeApplication(id) {
-    const i = applications.value.findIndex((a) => a.id === id)
-    if (i !== -1) {
-      applications.value.splice(i, 1)
-      save()
+      vaqtOldin: 'Hozirgina',
     }
+    myApplications.value.unshift(demoAriza)
+    return { ok: true }
   }
 
-  /**
-   * Berilgan foydalanuvchiga tegishli anketalar (eng yangisi birinchi).
-   * @param {import('vue').Ref<string|null>|string|null} owner
-   */
-  function getApplicationsByOwner(owner) {
-    return computed(() => {
-      const ownerId = unref(owner)
-      if (!ownerId) return []
-      return applications.value.filter((a) => a.ownerId === ownerId)
-    })
+  async function removeApplication(id) {
+    try {
+      const { ok } = await apiFetch(`/api/arizalar/${id}/`, { method: 'DELETE' })
+      if (ok) {
+        const i = myApplications.value.findIndex((a) => a.id === id)
+        if (i !== -1) myApplications.value.splice(i, 1)
+        return true
+      }
+    } catch {}
+    // Demo — localdan o'chiramiz
+    const i = myApplications.value.findIndex((a) => a.id === id)
+    if (i !== -1) myApplications.value.splice(i, 1)
+    return true
   }
 
-  /** @param {number} num */
+  async function acceptApplication(id) {
+    try {
+      const { ok, status, data } = await apiFetch(`/api/rieltor/arizalar/${id}/qabul/`, {
+        method: 'POST',
+      })
+      if (ok) {
+        const i = rieltorApplications.value.findIndex((a) => a.id === id)
+        if (i !== -1 && data?.ariza) rieltorApplications.value[i] = mapAriza(data.ariza)
+        else if (i !== -1) rieltorApplications.value[i] = { ...rieltorApplications.value[i], status: 'in_progress' }
+        return { ok: true }
+      }
+      if (status === 400) return { ok: false, errorKey: 'rieltor.errAlreadyHandled' }
+      if (status === 404) return { ok: false, errorKey: 'rieltor.errNotFound' }
+    } catch {}
+    // Demo — holatni o'zgartiramiz
+    const i = rieltorApplications.value.findIndex((a) => a.id === id)
+    if (i !== -1) rieltorApplications.value[i] = { ...rieltorApplications.value[i], status: 'in_progress' }
+    return { ok: true }
+  }
+
+  async function closeApplication(id) {
+    try {
+      const { ok, status, data } = await apiFetch(`/api/rieltor/arizalar/${id}/yopish/`, {
+        method: 'POST',
+      })
+      if (ok) {
+        const i = rieltorApplications.value.findIndex((a) => a.id === id)
+        if (i !== -1 && data?.ariza) rieltorApplications.value[i] = mapAriza(data.ariza)
+        else if (i !== -1) rieltorApplications.value[i] = { ...rieltorApplications.value[i], status: 'done' }
+        return { ok: true }
+      }
+      if (status === 400) return { ok: false, errorKey: 'rieltor.errAlreadyHandled' }
+      if (status === 404) return { ok: false, errorKey: 'rieltor.errNotFound' }
+    } catch {}
+    // Demo — holatni o'zgartiramiz
+    const i = rieltorApplications.value.findIndex((a) => a.id === id)
+    if (i !== -1) rieltorApplications.value[i] = { ...rieltorApplications.value[i], status: 'done' }
+    return { ok: true }
+  }
+
   function formatBudget(num) {
     if (!num || isNaN(num)) return '—'
     if (num >= 1_000_000_000) return (num / 1_000_000_000).toFixed(1) + ' ' + t('units.budgetMlrd')
@@ -153,35 +268,34 @@ export function useApplications() {
     return new Intl.NumberFormat(intlLocale.value).format(num)
   }
 
-  /** @param {Date|string} date */
   function timeAgo(date) {
     const diff = Math.floor((Date.now() - new Date(date).getTime()) / 1_000)
-    if (diff < 60) return t('units.timeS', { n: diff })
+    if (diff < 60)    return t('units.timeS', { n: diff })
     if (diff < 3_600) return t('units.timeM', { n: Math.floor(diff / 60) })
     if (diff < 86_400) return t('units.timeH', { n: Math.floor(diff / 3_600) })
     return t('units.timeD', { n: Math.floor(diff / 86_400) })
   }
 
-  /** @param {Date|string} date */
   function formatDate(date) {
     try {
       return new Intl.DateTimeFormat(intlLocale.value, {
-        day: '2-digit',
-        month: 'long',
-        hour: '2-digit',
-        minute: '2-digit',
+        day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit',
       }).format(new Date(date))
-    } catch {
-      return ''
-    }
+    } catch { return '' }
   }
 
   return {
-    applications: readonly(applications),
+    myApplications: readonly(myApplications),
+    rieltorApplications: readonly(rieltorApplications),
+    myLoaded: readonly(myLoaded),
+    rieltorLoaded: readonly(rieltorLoaded),
     activeCount,
+    fetchMyApplications,
+    fetchRieltorApplications,
     addApplication,
     removeApplication,
-    getApplicationsByOwner,
+    acceptApplication,
+    closeApplication,
     formatBudget,
     timeAgo,
     formatDate,

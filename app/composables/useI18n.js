@@ -1,18 +1,4 @@
-/**
- * useI18n — Yengil ko'p tillilik (i18n) tizimi.
- *
- * Boshqa composable'lar (useAuth, useApplications) kabi module-level ref
- * orqali singleton holatda ishlaydi — barcha komponentlar bir xil
- * reaktiv `locale` ni ulashadi.
- *
- * Birinchi til quyidagicha aniqlanadi:
- *  1) localStorage da saqlangan tanlov
- *  2) Telegram foydalanuvchisining language_code (ru/en/uz)
- *  3) Standart — 'uz'
- *
- * Tanlangan til localStorage da saqlanadi va sahifa yangilansa ham
- * o'sha tilda ochiladi.
- */
+
 
 import { messages, SUPPORTED_LOCALES, INTL_LOCALE } from '../i18n/messages'
 

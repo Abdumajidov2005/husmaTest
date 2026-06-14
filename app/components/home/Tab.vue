@@ -25,14 +25,14 @@
             stroke-linecap="round"
           />
         </svg>
-        {{ t('home.applyCta') }}
+        {{ t("home.applyCta") }}
       </UiButton>
     </div>
 
     <!-- Why Us -->
     <section class="px-3 mt-5">
       <h2 class="text-base font-bold text-gray-900 dark:text-white mb-3">
-        {{ t('home.whyUs') }}
+        {{ t("home.whyUs") }}
       </h2>
       <div class="space-y-2.5">
         <HomeFeatureCard
@@ -46,7 +46,7 @@
     <!-- How it works -->
     <section class="px-3 mt-5">
       <h2 class="text-base font-bold text-gray-900 dark:text-white mb-3">
-        {{ t('home.how') }}
+        {{ t("home.how") }}
       </h2>
       <ol class="space-y-3">
         <li
@@ -75,13 +75,16 @@
     <!-- Reviews -->
     <section class="px-3 mt-5">
       <h2 class="text-base font-bold text-gray-900 dark:text-white mb-3">
-        {{ t('home.reviewsTitle') }}
+        {{ t("home.reviewsTitle") }}
       </h2>
       <div class="space-y-3">
         <HomeReviewCard
           v-for="review in reviews"
-          :key="review.name"
-          v-bind="review"
+          :key="review.id ?? review.name"
+          :text="review.text"
+          :name="review.name"
+          :detail="review.detail"
+          :rating="review.rating"
         />
       </div>
     </section>
@@ -91,23 +94,64 @@
 <script setup>
 const emit = defineEmits(["apply"]);
 const { t } = useI18n();
+const { fetchHomeStatistika } = useStatistika();
+const { ijobiyReviews, fetchIjobiyReviews } = useReviews();
 
 // Ikona/uslub konfiguratsiyasi komponentda qoladi, matn i18n'dan keladi
 const STAT_ICONS = ["check", "users", "clock"];
 const WHY_ICONS = ["badge", "percent", "shield"];
-const REVIEW_META = [
-  { name: "Jamshid", rating: 5 },
-  { name: "Dilnoza", rating: 5 },
-];
 
-const stats = computed(() =>
-  t("home.stats").map((s, i) => ({ ...s, icon: STAT_ICONS[i] }))
-);
+// Bosh sahifa statistikasi — API muvaffaqiyatli kelsa, qiymatlar shu yerdan olinadi
+const apiStats = ref(null);
+
+const stats = computed(() => {
+  const fallback = t("home.stats");
+  if (!apiStats.value)
+    return fallback.map((s, i) => ({ ...s, icon: STAT_ICONS[i] }));
+
+  const s = apiStats.value;
+  // Backend turli kalit nomlari bilan qaytarishi mumkin — moslab olamiz
+  const values = [
+    s.jami_arizalar ??
+      s.arizalar_soni ??
+      s.total_applications ??
+      fallback[0]?.value,
+    s.faol_rieltorlar ?? s.rieltorlar_soni ?? s.realtors ?? fallback[1]?.value,
+    s.ortacha_javob ?? s.javob_vaqti ?? s.response_time ?? fallback[2]?.value,
+  ];
+
+  return fallback.map((f, i) => ({
+    ...f,
+    value: values[i] != null ? String(values[i]) : f.value,
+    icon: STAT_ICONS[i],
+  }));
+});
+
 const whyUs = computed(() =>
-  t("home.whyList").map((item, i) => ({ ...item, icon: WHY_ICONS[i] }))
+  t("home.whyList").map((item, i) => ({ ...item, icon: WHY_ICONS[i] })),
 );
 const steps = computed(() => t("home.steps"));
-const reviews = computed(() =>
-  t("home.reviews").map((r, i) => ({ ...r, ...REVIEW_META[i] }))
-);
+
+// Reviewlar — API kelsa shu yerdan, bo'lmasa i18n fallback
+const reviews = computed(() => {
+  if (ijobiyReviews.value.length) {
+    return ijobiyReviews.value.map((r) => ({
+      id: r.id,
+      text: r.matn || "",
+      name: r.ism,
+      detail: r.xona_hudud,
+      rating: r.yulduz,
+    }));
+  }
+  const REVIEW_META = [
+    { name: "Jamshid", rating: 5 },
+    { name: "Dilnoza", rating: 5 },
+  ];
+  return t("home.reviews").map((r, i) => ({ ...r, ...REVIEW_META[i] }));
+});
+
+onMounted(async () => {
+  apiStats.value = await fetchHomeStatistika();
+  await fetchIjobiyReviews();
+});
 </script>

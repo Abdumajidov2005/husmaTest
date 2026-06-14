@@ -114,9 +114,25 @@ const SLIDE_STYLES = [
   },
 ]
 
-const SLIDES = computed(() =>
-  SLIDE_STYLES.map((s, i) => ({ ...s, ...t('rieltor.carousel')[i] }))
-)
+const { sliderCards, fetchSlider } = useSlider()
+
+const SLIDES = computed(() => {
+  if (sliderCards.value.length) {
+    return sliderCards.value.map((card, i) => {
+      const style = SLIDE_STYLES[i % SLIDE_STYLES.length]
+      return {
+        ...style,
+        id: card.id,
+        badge: card.badge_matn,
+        label: card.sarlavha || '',
+        title: card.title,
+        stat: null,
+        statLabel: '',
+      }
+    })
+  }
+  return SLIDE_STYLES.map((s, i) => ({ ...s, ...t('rieltor.carousel')[i] }))
+})
 
 const INTERVAL = 4000
 
@@ -134,12 +150,12 @@ function goTo(index) {
 }
 function next() {
   direction.value = 'next'
-  current.value = (current.value + 1) % SLIDE_STYLES.length
+  current.value = (current.value + 1) % SLIDES.value.length
   resetProgress()
 }
 function prev() {
   direction.value = 'prev'
-  current.value = (current.value - 1 + SLIDE_STYLES.length) % SLIDE_STYLES.length
+  current.value = (current.value - 1 + SLIDES.value.length) % SLIDES.value.length
   resetProgress()
 }
 function resetProgress() {
@@ -163,7 +179,11 @@ function resume() { paused.value = false; startProgress() }
 const { isDragging, dragStyle, onTouchStart, onTouchMove, onTouchEnd, onMouseDown } =
   useDragCarousel({ onNext: next, onPrev: prev, onPause: pause, onResume: resume })
 
-onMounted(() => { startAutoplay(); startProgress() })
+onMounted(() => { startAutoplay(); startProgress(); fetchSlider() })
+
+watch(() => SLIDES.value.length, () => {
+  if (current.value >= SLIDES.value.length) current.value = 0
+})
 onUnmounted(() => { clearInterval(timer); clearInterval(progressTimer) })
 </script>
 

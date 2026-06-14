@@ -21,6 +21,12 @@
           <path d="M8 1.5C5.515 1.5 3.5 3.515 3.5 6c0 3.75 4.5 8.5 4.5 8.5S12.5 9.75 12.5 6c0-2.485-2.015-4.5-4.5-4.5z" stroke="currentColor" stroke-width="1.5"/>
           <circle cx="8" cy="6" r="1.5" stroke="currentColor" stroke-width="1.5"/>
         </template>
+        <template v-else-if="icon === 'city'">
+          <path d="M2 14V4l3.5-1.5V14M9 14V6l4.5-1.5V14M2 14h12M9 9h.01M9 11.5h.01" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </template>
+        <template v-else-if="icon === 'home'">
+          <path d="M2 8.5L8 3l6 5.5V14H10v-4H6v4H2V8.5z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
+        </template>
         <template v-else-if="icon === 'money'">
           <circle cx="8" cy="8" r="6.5" stroke="currentColor" stroke-width="1.5"/>
           <path d="M8 4.5v7M6 6h3a1 1 0 010 2H7a1 1 0 000 2h3" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>

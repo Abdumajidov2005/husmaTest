@@ -1,8 +1,4 @@
-/**
- * Hero section uchun statik particle pozitsiyalari.
- * Math.random() template ichida emas, bu yerda — bir marta hisoblanadi.
- * onMounted ichida ishlaydi → SSR paytida muammo yo'q.
- */
+
 export function useHeroParticles(count = 18) {
   const particles = ref([])
 

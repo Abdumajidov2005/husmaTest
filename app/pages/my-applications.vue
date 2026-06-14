@@ -35,7 +35,11 @@
         </span>
       </div>
 
-      <TransitionGroup name="list" tag="div" class="space-y-3">
+      <div v-if="isLoading" class="text-center py-12 text-gray-400 text-sm">
+        {{ t('common.loading') }}
+      </div>
+
+      <TransitionGroup v-else name="list" tag="div" class="space-y-3">
         <ProfileAnketaCard
           v-for="app in myApplications"
           :key="app.id"
@@ -45,7 +49,7 @@
       </TransitionGroup>
 
       <!-- Bo'sh holat -->
-      <div v-if="myApplications.length === 0" class="text-center pt-14 px-6">
+      <div v-if="!isLoading && myApplications.length === 0" class="text-center pt-14 px-6">
         <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center">
           <svg class="w-8 h-8 text-gray-300 dark:text-gray-600" fill="none" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M6 4h12v16l-6-3.5L6 20V4z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/>
@@ -91,14 +95,21 @@
 <script setup>
 const router = useRouter()
 const { t } = useI18n()
-const { ready, haptic } = useTelegram()
-const { id: ownerId } = useCurrentUser()
-const { getApplicationsByOwner, removeApplication } = useApplications()
+const { ready, haptic, notificationHaptic } = useTelegram()
+const { myApplications, fetchMyApplications, removeApplication } = useApplications()
 
-const myApplications = getApplicationsByOwner(ownerId)
+const isLoading = ref(false)
 const showCancelled = ref(false)
 
-onMounted(() => ready())
+onMounted(async () => {
+  ready()
+  isLoading.value = true
+  try {
+    await fetchMyApplications()
+  } finally {
+    isLoading.value = false
+  }
+})
 
 function goBack() {
   haptic('light')
@@ -112,9 +123,13 @@ function goBack() {
 // Telegram ning tabiiy "Orqaga" tugmasi
 const { isNativeBack } = useBackButton(goBack)
 
-function handleCancel(id) {
-  removeApplication(id)
-  showCancelled.value = true
+async function handleCancel(id) {
+  const ok = await removeApplication(id)
+  if (ok) {
+    showCancelled.value = true
+  } else {
+    notificationHaptic('error')
+  }
 }
 </script>
 

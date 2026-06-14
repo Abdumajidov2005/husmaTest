@@ -1,9 +1,5 @@
 /**
- * useBackButton — Sahifa uchun Telegram WebApp ning tabiiy "Orqaga" tugmasi.
- *
- * Telegram ichida  → tabiiy BackButton ko'rsatiladi, bosilganda onBack() ishlaydi.
- * Brauzerda (Telegram yo'q) → hech narsa qilinmaydi; `isNativeBack` false bo'lib,
- * sahifadagi maxsus tugma zaxira sifatida ko'rinadi.
+
  *
  * @param {() => void} onBack — orqaga qaytish ishlovchisi
  * @returns {{ isNativeBack: import('vue').Ref<boolean> }}

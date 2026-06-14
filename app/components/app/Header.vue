@@ -15,6 +15,9 @@
           />
         </nav>
 
+        <!-- Til tanlagich — flagni bosib tillarni almashtirish -->
+        <UiLanguageSwitcherCompact />
+
         <!-- Logout — faqat rieltor ko'radi -->
         <UiButton
           v-if="isRieltor"

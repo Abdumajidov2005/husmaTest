@@ -5,15 +5,7 @@ export default defineNuxtConfig({
   // Telegram Mini App — faqat client-side render
   ssr: false,
 
-  modules: ['@nuxtjs/tailwindcss', '@nuxtjs/color-mode'],
-
-  colorMode: {
-    classSuffix: '',
-    preference: 'system',
-    fallback: 'light',
-    // localStorage da saqlaydi — SSR mismatch oldini oladi
-    storageKey: 'husma-color-mode',
-  },
+  modules: ['@nuxtjs/tailwindcss'],
 
   css: ['~/assets/css/main.css'],
 

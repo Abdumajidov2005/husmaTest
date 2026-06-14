@@ -1,6 +1,5 @@
 /**
- * Reusable drag/swipe carousel composable.
- * Touch va mouse drag ikkalasini ham qo'llab-quvvatlaydi.
+ 
  * 
  * @param {Object} options
  * @param {Ref<number>} options.current    - faol slide index

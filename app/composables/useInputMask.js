@@ -1,16 +1,5 @@
-/**
- * Input mask composable — telefon va narx (price) inputlari uchun.
- *
- * Sof (pure) format funksiyalari + cursorni saqlovchi `applyMask` handler.
- * SSR-safe: faqat string bilan ishlaydi, `import.meta.client` shart emas.
- *
- * Foydalanish (Form.vue):
- *   const { onPhoneInput, phoneDigits, onPriceInput, formatThousands } = useInputMask()
- *
- *   <input :value="form.phone" @input="onPhoneInput($event, v => form.phone = v)" />
- */
 
-// Faqat raqamlarni qoldirish
+
 const onlyDigits = (v) => String(v ?? '').replace(/\D/g, '')
 
 /**
@@ -27,17 +16,13 @@ const onlyDigits = (v) => String(v ?? '').replace(/\D/g, '')
  */
 function nationalDigits(value) {
   let d = onlyDigits(value)
-  // Mask doimo "+998 (" prefiksini ko'rsatadi — shuning uchun maydon qiymatini
-  // qayta o'qiganda boshidagi "998" ni HAR DOIM olib tashlaymiz. Aks holda
-  // prefiksdagi 998 ni milliy raqamga qo'shib, operator kodi buzilardi
-  // (mas. "90" yozsa "+998 (99) 0..." bo'lib ketardi).
+
   if (d.startsWith('998')) d = d.slice(3)
   return d.slice(0, 9)
 }
 
 /**
- * O'zbekiston telefon raqamini formatlash.
- *   "998901234567" / "901234567" / "+998 (90) 1..."  →  "+998 (90) 123-45-67"
+
  * @param {string|number} value
  * @returns {string}
  */
@@ -46,8 +31,7 @@ export function formatUzPhone(value) {
 
   if (!d) return '' // bo'sh bo'lsa — placeholder ko'rinadi
 
-  // Ajratuvchi belgilar faqat KEYINGI raqam bo'lganda qo'shiladi —
-  // shunda o'chirish (backspace) qotib qolmaydi.
+
   let out = '+998 (' + d.slice(0, 2)
   if (d.length > 2) out += ') ' + d.slice(2, 5)
   if (d.length > 5) out += '-' + d.slice(5, 7)
