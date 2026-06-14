@@ -1,11 +1,13 @@
 
+
 const BASE_URL = 'https://husma.pythonanywhere.com'
-const SESSION_KEY = 'husma_session'
-const TOKEN_KEY   = 'husma_tokens'
+const SESSION_KEY = 'husma_session'   // user obyekti (UI uchun)
+const TOKEN_KEY   = 'husma_tokens'    // { access, refresh }
 
 const user       = ref(null)
 const isHydrated = ref(false)
 
+// --- Token saqlash ---
 function loadTokens() {
   if (!import.meta.client) return null
   try {
@@ -29,6 +31,7 @@ function persistSession(sessionData) {
   if (import.meta.client) localStorage.setItem(SESSION_KEY, JSON.stringify(sessionData))
 }
 
+
 async function apiFetch(path, { method = 'GET', body, auth = true, _retried = false } = {}) {
   const headers = { 'Content-Type': 'application/json' }
   if (auth) {
@@ -47,6 +50,7 @@ async function apiFetch(path, { method = 'GET', body, auth = true, _retried = fa
     return { ok: false, status: 0, data: null, networkError: true }
   }
 
+  // Token muddati tugagan bo'lsa — refresh qilib bir marta qayta urinamiz
   if (res.status === 401 && auth && !_retried) {
     const refreshed = await refreshToken()
     if (refreshed) return apiFetch(path, { method, body, auth, _retried: true })
@@ -57,6 +61,10 @@ async function apiFetch(path, { method = 'GET', body, auth = true, _retried = fa
   return { ok: res.ok, status: res.status, data }
 }
 
+/**
+ * POST /api/auth/refresh/ — access tokenni yangilaydi.
+ * @returns {Promise<boolean>}
+ */
 async function refreshToken() {
   const tokens = loadTokens()
   if (!tokens?.refresh) return false
@@ -76,6 +84,7 @@ async function refreshToken() {
   }
 }
 
+
 async function fetchMe() {
   const { ok, data } = await apiFetch('/api/users/me/')
   if (!ok || !data) return null
@@ -83,7 +92,7 @@ async function fetchMe() {
     id: data.id,
     name: data.full_name || data.telegram_username || 'Foydalanuvchi',
     phone: data.phone,
-    role: data.role === 'makler' ? 'rieltor' : data.role,
+    role: data.role === 'makler' ? 'rieltor' : data.role, // 'user' | 'rieltor' | 'admin'
     telegram_id: data.telegram_id,
     telegram_username: data.telegram_username,
     full_name: data.full_name,
@@ -96,6 +105,7 @@ export function useAuth() {
   const isClient        = computed(() => isHydrated.value && user.value?.role === 'user')
   const isAdmin         = computed(() => isHydrated.value && user.value?.role === 'admin')
 
+ 
   function hydrate() {
     if (isHydrated.value || !import.meta.client) return
     try {
@@ -108,16 +118,24 @@ export function useAuth() {
     }
   }
 
+  /**
+   
+   * @param {string} initData — window.Telegram.WebApp.initData (xom satr)
+   * @returns {{ ok: boolean, errorKey?: string }}
+   */
   async function telegramLogin(initData) {
     if (!initData) return { ok: false, errorKey: 'auth.telegramRequired' }
+
     try {
       const res = await fetch(`${BASE_URL}/api/auth/telegram/`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ init_data: initData }),
       })
+
       let data = null
       try { data = await res.json() } catch {}
+
       if (res.ok) {
         if (data?.access || data?.refresh) {
           saveTokens({ access: data.access, refresh: data.refresh })
@@ -126,6 +144,7 @@ export function useAuth() {
         if (profile) persistSession(profile)
         return { ok: true }
       }
+
       if (res.status === 400) return { ok: false, errorKey: 'auth.validationError' }
       if (res.status === 401) return { ok: false, errorKey: 'auth.telegramFailed' }
       return { ok: false, errorKey: 'auth.serverError' }
@@ -134,6 +153,11 @@ export function useAuth() {
     }
   }
 
+  /**
+ 
+   * @param {{ login: string, password: string }} credentials
+   * @returns {{ ok: boolean, errorKey?: string }}
+   */
   async function signIn({ login, password }) {
     try {
       const res = await fetch(`${BASE_URL}/api/auth/rieltor/login/`, {
@@ -141,8 +165,10 @@ export function useAuth() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: login, password }),
       })
+
       let data = null
       try { data = await res.json() } catch {}
+
       if (res.ok) {
         if (data?.access || data?.refresh) {
           saveTokens({ access: data.access, refresh: data.refresh })
@@ -151,105 +177,81 @@ export function useAuth() {
         persistSession(profile || { name: login, role: 'rieltor' })
         return { ok: true }
       }
+
       if (res.status === 401) return { ok: false, errorKey: 'auth.invalid' }
       if (res.status === 403) return { ok: false, errorKey: 'auth.noProfile' }
-      // Server xatosi — demo rejim
-      persistSession({ name: login, role: 'rieltor', id: 0 })
-      return { ok: true }
+      return { ok: false, errorKey: 'auth.serverError' }
     } catch {
-      // Tarmoq xatosi — demo rejim
-      persistSession({ name: login, role: 'rieltor', id: 0 })
+      return { ok: false, errorKey: 'auth.networkError' }
+    }
+  }
+
+  /**
+ 
+   * @param {{ full_name: string, phone: string, username: string, password: string, hududlar?: number[], mulk_turlari?: number[] }} data
+   * @returns {{ ok: boolean, errorKey?: string, detail?: string }}
+   */
+  async function requestOtp({ full_name, phone, username, password, hududlar, mulk_turlari }) {
+    const { ok, status, data, networkError } = await apiFetch('/api/auth/rieltor/otp-sorov/', {
+      method: 'POST',
+      body: {
+        full_name,
+        phone,
+        username,
+        password,
+        hududlar: Array.isArray(hududlar) ? hududlar : (hududlar ? [hududlar] : []),
+        mulk_turlari: Array.isArray(mulk_turlari) ? mulk_turlari : (mulk_turlari ? [mulk_turlari] : []),
+      },
+    })
+
+    if (networkError) return { ok: false, errorKey: 'auth.networkError' }
+    if (ok) return { ok: true }
+
+    if (status === 400) {
+      const detail =
+        data?.username?.[0] || data?.phone?.[0] || data?.password?.[0] ||
+        data?.detail || data?.error || ''
+      if (typeof detail === 'string' && detail.toLowerCase().includes('rieltor')) {
+        return { ok: false, errorKey: 'auth.alreadyRieltor' }
+      }
+      return { ok: false, errorKey: 'auth.validationError', detail }
+    }
+    if (status === 403) return { ok: false, errorKey: 'auth.telegramRequired' }
+    if (status === 503) return { ok: false, errorKey: 'auth.telegramFailed' }
+    return { ok: false, errorKey: 'auth.serverError' }
+  }
+
+  /**
+
+   * @param {string} kode — 6 xonali kod
+   * @returns {{ ok: boolean, errorKey?: string }}
+   */
+  async function verifyOtp(kode) {
+    const { ok, status, networkError } = await apiFetch('/api/auth/rieltor/otp-verify/', {
+      method: 'POST',
+      body: { kode },
+    })
+
+    if (networkError) return { ok: false, errorKey: 'auth.networkError' }
+    if (ok) {
+      // Rieltor yaratildi — profilni yangilab olamiz (role endi 'makler')
+      const profile = await fetchMe()
+      if (profile) persistSession(profile)
       return { ok: true }
     }
+    if (status === 400) return { ok: false, errorKey: 'auth.invalidOtp' }
+    if (status === 403) return { ok: false, errorKey: 'auth.telegramRequired' }
+    return { ok: false, errorKey: 'auth.serverError' }
   }
 
-  async function requestOtp({ full_name, phone, username, password, hududlar, mulk_turlari }) {
-    try {
-      const { ok, status, data, networkError } = await apiFetch('/api/auth/rieltor/otp-sorov/', {
-        method: 'POST',
-        body: {
-          full_name,
-          phone,
-          username,
-          password,
-          hududlar: Array.isArray(hududlar) ? hududlar : (hududlar ? [hududlar] : []),
-          mulk_turlari: Array.isArray(mulk_turlari) ? mulk_turlari : (mulk_turlari ? [mulk_turlari] : []),
-        },
-      })
-
-      if (!networkError && status !== 0) {
-        if (ok) return { ok: true }
-        if (status === 400) {
-          const detail =
-            data?.username?.[0] || data?.phone?.[0] || data?.password?.[0] ||
-            data?.detail || data?.error || ''
-          if (typeof detail === 'string' && detail.toLowerCase().includes('rieltor')) {
-            return { ok: false, errorKey: 'auth.alreadyRieltor' }
-          }
-          return { ok: false, errorKey: 'auth.validationError', detail }
-        }
-        if (status === 503) return { ok: false, errorKey: 'auth.telegramFailed' }
-        // 403 yoki boshqa — demo OTP bilan davom
-      }
-    } catch {}
-
-    // Demo rejim — tasodifiy 6 xonali OTP
-    const demoCode = String(Math.floor(100000 + Math.random() * 900000))
-    if (import.meta.client) {
-      try { sessionStorage.setItem('demo_otp', demoCode) } catch {}
-    }
-    return { ok: true, demoOtp: demoCode }
-  }
-
-  async function verifyOtp(kode) {
-    // Avval demo OTP tekshiramiz
-    const demoOtp = import.meta.client ? sessionStorage.getItem('demo_otp') : null
-
-    try {
-      const { ok, status, networkError } = await apiFetch('/api/auth/rieltor/otp-verify/', {
-        method: 'POST',
-        body: { kode },
-      })
-      if (!networkError && status !== 0) {
-        if (ok) {
-          const profile = await fetchMe()
-          if (profile) persistSession(profile)
-          if (import.meta.client) sessionStorage.removeItem('demo_otp')
-          return { ok: true }
-        }
-        if (status === 400) {
-          // Noto'g'ri kod — demo OTP bilan tekshiramiz
-          if (demoOtp && kode === demoOtp) {
-            if (import.meta.client) sessionStorage.removeItem('demo_otp')
-            persistSession({ name: 'Yangi Rieltor', role: 'rieltor', id: 0 })
-            return { ok: true }
-          }
-          return { ok: false, errorKey: 'auth.invalidOtp' }
-        }
-      }
-    } catch {}
-
-    // Demo rejim
-    if (demoOtp) {
-      if (kode === demoOtp) {
-        if (import.meta.client) sessionStorage.removeItem('demo_otp')
-        persistSession({ name: 'Yangi Rieltor', role: 'rieltor', id: 0 })
-        return { ok: true }
-      }
-      return { ok: false, errorKey: 'auth.invalidOtp' }
-    }
-    // Demo OTP yo'q — istalgan kod bilan o'tkazib yuboramiz
-    persistSession({ name: 'Yangi Rieltor', role: 'rieltor', id: 0 })
-    return { ok: true }
-  }
-
+  /**
+   * @returns {Promise<{ ok: boolean, data?: object, errorKey?: string }>}
+   */
   async function checkFaollik() {
-    try {
-      const { ok, status, data, networkError } = await apiFetch('/api/auth/rieltor/faollik/')
-      if (networkError) return { ok: false, errorKey: 'auth.networkError' }
-      if (ok) return { ok: true, data }
-      if (status === 403) return { ok: false, errorKey: 'auth.noProfile' }
-    } catch {}
+    const { ok, status, data, networkError } = await apiFetch('/api/auth/rieltor/faollik/')
+    if (networkError) return { ok: false, errorKey: 'auth.networkError' }
+    if (ok) return { ok: true, data }
+    if (status === 403) return { ok: false, errorKey: 'auth.noProfile' }
     return { ok: false, errorKey: 'auth.serverError' }
   }
 
@@ -297,35 +299,29 @@ export function useObuna() {
   }
 
   async function fetchMeningObuna() {
-    try {
-      const { ok, data, networkError } = await apiFetch('/api/obuna/mening/')
-      if (networkError) return { ok: false, errorKey: 'auth.networkError' }
-      if (ok) return { ok: true, data }
-    } catch {}
+    const { ok, data, networkError } = await apiFetch('/api/obuna/mening/')
+    if (networkError) return { ok: false, errorKey: 'auth.networkError' }
+    if (ok) return { ok: true, data }
     return { ok: false, errorKey: 'auth.serverError' }
   }
 
   async function sotibOlish({ tarif_id, provayder = 'payme' }) {
-    try {
-      const { ok, status, data, networkError } = await apiFetch('/api/obuna/sotib-olish/', {
-        method: 'POST',
-        body: { tarif_id, provayder },
-      })
-      if (networkError) return { ok: false, errorKey: 'auth.networkError' }
-      if (ok) return { ok: true, data }
-      if (status === 400) return { ok: false, errorKey: 'auth.validationError', detail: data?.detail || '' }
-    } catch {}
+    const { ok, status, data, networkError } = await apiFetch('/api/obuna/sotib-olish/', {
+      method: 'POST',
+      body: { tarif_id, provayder },
+    })
+    if (networkError) return { ok: false, errorKey: 'auth.networkError' }
+    if (ok) return { ok: true, data }
+    if (status === 400) return { ok: false, errorKey: 'auth.validationError', detail: data?.detail || '' }
     return { ok: false, errorKey: 'auth.serverError' }
   }
 
   async function bekorQilish(id) {
-    try {
-      const { ok, status, networkError } = await apiFetch(`/api/obuna/${id}/bekor/`, { method: 'POST' })
-      if (networkError) return { ok: false, errorKey: 'auth.networkError' }
-      if (ok) return { ok: true }
-      if (status === 400) return { ok: false, errorKey: 'obuna.cantCancel' }
-      if (status === 404) return { ok: false, errorKey: 'obuna.notFound' }
-    } catch {}
+    const { ok, status, networkError } = await apiFetch(`/api/obuna/${id}/bekor/`, { method: 'POST' })
+    if (networkError) return { ok: false, errorKey: 'auth.networkError' }
+    if (ok) return { ok: true }
+    if (status === 400) return { ok: false, errorKey: 'obuna.cantCancel' }
+    if (status === 404) return { ok: false, errorKey: 'obuna.notFound' }
     return { ok: false, errorKey: 'auth.serverError' }
   }
 
