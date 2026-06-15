@@ -410,19 +410,27 @@
         v-if="isRieltor"
         to="/obuna"
         class="card p-4 flex items-center gap-4 rounded-2xl border shadow-sm active:scale-[0.99] transition-transform"
-        :class="obunaFaolmi
-          ? 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800 hover:border-brand-200 dark:hover:border-brand-700'
-          : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'"
+        :class="
+          obunaFaolmi
+            ? 'bg-white dark:bg-gray-900 border-gray-100 dark:border-gray-800 hover:border-brand-200 dark:hover:border-brand-700'
+            : 'bg-amber-50 dark:bg-amber-900/20 border-amber-200 dark:border-amber-800'
+        "
       >
         <div
           class="w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0"
-          :class="obunaFaolmi
-            ? 'bg-brand-50 dark:bg-brand-900/30'
-            : 'bg-amber-100 dark:bg-amber-800/40'"
+          :class="
+            obunaFaolmi
+              ? 'bg-brand-50 dark:bg-brand-900/30'
+              : 'bg-amber-100 dark:bg-amber-800/40'
+          "
         >
           <svg
             class="w-5 h-5"
-            :class="obunaFaolmi ? 'text-brand-600 dark:text-brand-400' : 'text-amber-600 dark:text-amber-400'"
+            :class="
+              obunaFaolmi
+                ? 'text-brand-600 dark:text-brand-400'
+                : 'text-amber-600 dark:text-amber-400'
+            "
             fill="none"
             viewBox="0 0 20 20"
             aria-hidden="true"
@@ -439,8 +447,17 @@
           <p class="text-base font-bold text-gray-900 dark:text-white">
             {{ t("profile.obuna") }}
           </p>
-          <p class="text-sm mt-0.5" :class="obunaFaolmi ? 'text-gray-400 dark:text-gray-500' : 'text-amber-600 dark:text-amber-400'">
-            {{ obunaFaolmi ? t('profile.obunaFaol') : t('profile.obunaFaolEmas') }}
+          <p
+            class="text-sm mt-0.5"
+            :class="
+              obunaFaolmi
+                ? 'text-gray-400 dark:text-gray-500'
+                : 'text-amber-600 dark:text-amber-400'
+            "
+          >
+            {{
+              obunaFaolmi ? t("profile.obunaFaol") : t("profile.obunaFaolEmas")
+            }}
           </p>
         </div>
         <svg

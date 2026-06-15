@@ -32,6 +32,7 @@ interface _GlobalComponents {
   UiDarkModeSwitch: typeof import("../../app/components/ui/DarkModeSwitch.vue")['default']
   UiFlag: typeof import("../../app/components/ui/Flag.vue")['default']
   UiFormField: typeof import("../../app/components/ui/FormField.vue")['default']
+  UiIcons: typeof import("../../app/components/ui/Icons.vue")['default']
   UiInfoCard: typeof import("../../app/components/ui/InfoCard.vue")['default']
   UiLanguageSwitcher: typeof import("../../app/components/ui/LanguageSwitcher.vue")['default']
   UiLanguageSwitcherCompact: typeof import("../../app/components/ui/LanguageSwitcherCompact.vue")['default']
@@ -78,6 +79,7 @@ interface _GlobalComponents {
   LazyUiDarkModeSwitch: LazyComponent<typeof import("../../app/components/ui/DarkModeSwitch.vue")['default']>
   LazyUiFlag: LazyComponent<typeof import("../../app/components/ui/Flag.vue")['default']>
   LazyUiFormField: LazyComponent<typeof import("../../app/components/ui/FormField.vue")['default']>
+  LazyUiIcons: LazyComponent<typeof import("../../app/components/ui/Icons.vue")['default']>
   LazyUiInfoCard: LazyComponent<typeof import("../../app/components/ui/InfoCard.vue")['default']>
   LazyUiLanguageSwitcher: LazyComponent<typeof import("../../app/components/ui/LanguageSwitcher.vue")['default']>
   LazyUiLanguageSwitcherCompact: LazyComponent<typeof import("../../app/components/ui/LanguageSwitcherCompact.vue")['default']>

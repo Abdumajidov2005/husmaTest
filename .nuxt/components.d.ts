@@ -32,6 +32,7 @@ export const UiButton: typeof import("../app/components/ui/Button.vue")['default
 export const UiDarkModeSwitch: typeof import("../app/components/ui/DarkModeSwitch.vue")['default']
 export const UiFlag: typeof import("../app/components/ui/Flag.vue")['default']
 export const UiFormField: typeof import("../app/components/ui/FormField.vue")['default']
+export const UiIcons: typeof import("../app/components/ui/Icons.vue")['default']
 export const UiInfoCard: typeof import("../app/components/ui/InfoCard.vue")['default']
 export const UiLanguageSwitcher: typeof import("../app/components/ui/LanguageSwitcher.vue")['default']
 export const UiLanguageSwitcherCompact: typeof import("../app/components/ui/LanguageSwitcherCompact.vue")['default']
@@ -78,6 +79,7 @@ export const LazyUiButton: LazyComponent<typeof import("../app/components/ui/But
 export const LazyUiDarkModeSwitch: LazyComponent<typeof import("../app/components/ui/DarkModeSwitch.vue")['default']>
 export const LazyUiFlag: LazyComponent<typeof import("../app/components/ui/Flag.vue")['default']>
 export const LazyUiFormField: LazyComponent<typeof import("../app/components/ui/FormField.vue")['default']>
+export const LazyUiIcons: LazyComponent<typeof import("../app/components/ui/Icons.vue")['default']>
 export const LazyUiInfoCard: LazyComponent<typeof import("../app/components/ui/InfoCard.vue")['default']>
 export const LazyUiLanguageSwitcher: LazyComponent<typeof import("../app/components/ui/LanguageSwitcher.vue")['default']>
 export const LazyUiLanguageSwitcherCompact: LazyComponent<typeof import("../app/components/ui/LanguageSwitcherCompact.vue")['default']>
