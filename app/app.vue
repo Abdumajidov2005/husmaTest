@@ -7,21 +7,12 @@
 </template>
 
 <script setup>
-const { hydrate, telegramLogin, isAuthenticated } = useAuth();
-const { tg, initData } = useTelegram();
+// Telegram auth va sessiya tiklash `plugins/auth.client.js` da bajariladi
+// (sahifalar mount bo'lishidan oldin), shuning uchun bu yerda takrorlanmaydi.
+const { tg } = useTelegram();
 useTheme();
 
-// hydrate faqat client-side da, onMounted ichida
-onMounted(async () => {
+onMounted(() => {
   tg.value?.setHeaderColor("#dc2626");
-
-  // Avval localStorage dagi sessiyani tiklaymiz (tezkor render uchun)
-  hydrate();
-
-  // Telegram Mini App ichida ochilgan bo'lsa va hali login qilinmagan bo'lsa —
-  // backendga initData yuborib avtomatik JWT olamiz (POST /api/auth/telegram/)
-  if (initData.value && !isAuthenticated.value) {
-    await telegramLogin(initData.value);
-  }
 });
 </script>

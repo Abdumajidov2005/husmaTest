@@ -1,8 +1,33 @@
 
+// --- Telegram WebApp obyekti uchun REAKTIV holat ---
+// MUHIM: window.Telegram reaktiv emas, shuning uchun uni computed ichida
+// o'qish bir marta keshlanib qoladi (skript kech yuklansa — null bo'lib qoladi).
+// Buning o'rniga shallowRef ishlatamiz va skript tayyor bo'lishi bilan yangilaymiz.
+const tgRef = shallowRef(null)
+
+function syncTg() {
+  if (import.meta.client && !tgRef.value && window.Telegram?.WebApp) {
+    tgRef.value = window.Telegram.WebApp
+  }
+}
+
+// Klient tomonda darhol sinxronlashga urinamiz; skript hali yuklanmagan bo'lsa,
+// qisqa interval bilan tayyor bo'lishini kutamiz (defer/sekin tarmoq holatlari uchun).
+if (import.meta.client) {
+  syncTg()
+  if (!tgRef.value) {
+    let tries = 0
+    const id = setInterval(() => {
+      syncTg()
+      if (tgRef.value || ++tries > 60) clearInterval(id)
+    }, 50)
+  }
+}
+
 export function useTelegram() {
-  const tg = computed(() =>
-    import.meta.client ? window.Telegram?.WebApp ?? null : null
-  )
+  // Har bir chaqiruvda window dan o'qib refni yangilashga urinamiz
+  syncTg()
+  const tg = tgRef
 
   const user = computed(() => tg.value?.initDataUnsafe?.user ?? null)
   // Backendga yuborish uchun xom (raw) initData satri
@@ -17,6 +42,7 @@ export function useTelegram() {
   })
 
   function ready() {
+    syncTg()
     tg.value?.ready()
     tg.value?.expand()
   }

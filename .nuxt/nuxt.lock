@@ -1,0 +1,9 @@
+{
+  "pid": 14836,
+  "startedAt": 1781537262494,
+  "command": "dev",
+  "cwd": "C:/Users/Laptop/Desktop/otkuriy/husmaTest",
+  "port": 3000,
+  "hostname": "::1",
+  "url": "http://[::1]:3000"
+}

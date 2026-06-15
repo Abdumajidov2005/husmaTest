@@ -21,7 +21,9 @@ export default defineNuxtConfig({
         { name: 'theme-color', content: '#dc2626' },
       ],
       script: [
-        { src: 'https://telegram.org/js/telegram-web-app.js', defer: true },
+        // Telegram hujjatlari tavsiyasi: skript <head> da sinxron yuklanadi,
+        // shunda ilova mount bo'lishidan oldin window.Telegram.WebApp tayyor bo'ladi.
+        { src: 'https://telegram.org/js/telegram-web-app.js' },
       ],
     },
   },
