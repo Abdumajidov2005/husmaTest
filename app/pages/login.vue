@@ -487,7 +487,14 @@ definePageMeta({ layout: false });
 
 const { t } = useI18n();
 // const { signIn, requestOtp, verifyOtp, isAuthenticated, hydrate } = useAuth();
-const { signIn, requestOtp, verifyOtp, isAuthenticated, hydrate, telegramLogin } = useAuth();
+const {
+  signIn,
+  requestOtp,
+  verifyOtp,
+  isAuthenticated,
+  hydrate,
+  telegramLogin,
+} = useAuth();
 // const { notificationHaptic, ready } = useTelegram();
 const { notificationHaptic, ready, initData } = useTelegram();
 const { onPhoneInput, isPhoneComplete } = useInputMask();
@@ -573,6 +580,8 @@ onUnmounted(clearCountdown);
 onMounted(() => {
   hydrate();
   ready();
+  console.log("initData:", initData.value);
+  console.log("tg:", window.Telegram?.WebApp);
   fetchHududlar();
   if (isAuthenticated.value) navigateTo("/", { replace: true });
 });
@@ -673,7 +682,10 @@ async function handleSubmit() {
       }
     } else {
       // Login — o'zgarishsiz
-      const result = await signIn({ login: form.login, password: form.password });
+      const result = await signIn({
+        login: form.login,
+        password: form.password,
+      });
       if (result.ok) {
         notificationHaptic("success");
         await navigateTo("/", { replace: true });
@@ -689,8 +701,11 @@ async function handleSubmit() {
 
 // Telegram login yordamchi funksiya
 async function signIn_telegram() {
+  console.log("initData value:", initData.value);
   if (!initData.value) return { ok: false };
-  return await telegramLogin(initData.value);
+  const result = await telegramLogin(initData.value);
+  console.log("telegramLogin result:", result);
+  return result;
 }
 
 async function handleOtpSubmit() {
